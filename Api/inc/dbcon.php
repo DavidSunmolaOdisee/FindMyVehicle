@@ -1,7 +1,7 @@
 <?php
 $servername = "ID476851_DavidOlusegunWM.db.webhosting.be";
 $username = "ID476851_DavidOlusegunWM"; // username (zie Hosting)
-$password = "Segun2006@"; // paswoord DATABANK (zie hosting)
+$password = "XXXXX"; // paswoord DATABANK (zie hosting)
 $dbname = "ID476851_DavidOlusegunWM"; // naam databank (zie hosting ; zelf gekozen)
 
 $conn = new mysqli($servername, $username, $password, $dbname);
