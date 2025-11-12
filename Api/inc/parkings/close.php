@@ -1,9 +1,6 @@
 <?php
-// Route: POST /parkings/close?id=...
 $id = $_GET["id"] ?? null;
-if (!$id) {
-  deliver_response(400, ["error" => "Parking id required"]);
-}
+if (!$id) { deliver_response(400, ["error" => "Parking id required"]); }
 
 $sql = "UPDATE parkings SET closed_at = NOW() WHERE id = ?";
 $stmt = $conn->prepare($sql);

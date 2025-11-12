@@ -1,6 +1,8 @@
 RewriteEngine On
-RewriteRule ^users/?$ users.php [L,NC]
-RewriteRule ^users/(.*)$ users.php [L,NC]     # <-- zodat /users/login en /users/change_password werken
-RewriteRule ^vehicles/?$ vehicles.php [L,NC]
-RewriteRule ^parkings/?$ parkings.php [L,NC]
-RewriteRule ^parkings/close/?$ parkings.php [L,NC]
+RewriteRule ^users/?$ users.php [L,NC,QSA]
+RewriteRule ^users/(.*)$ users.php?path=$1 [L,NC,QSA]
+
+RewriteRule ^vehicles/?$ vehicles.php [L,NC,QSA]
+
+RewriteRule ^parkings/?$ parkings.php [L,NC,QSA]
+RewriteRule ^parkings/(.*)$ parkings.php?path=$1 [L,NC,QSA]  
