@@ -1,6 +1,4 @@
 <?php
-// Query: ?id=...  (optioneel)
-// Zonder id → alle users (handig voor testen)
 $id = $_GET["id"] ?? null;
 
 if ($id) {
@@ -15,5 +13,4 @@ if ($id) {
 $stmt->execute();
 $result = $stmt->get_result();
 $data   = getJsonObjFromResult($result);
-
 deliver_response(200, $data);

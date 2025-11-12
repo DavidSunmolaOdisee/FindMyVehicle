@@ -1,12 +1,13 @@
 <?php
-// Body: { username, email? }
+// Body: { username, password, email? }
 $body = getJsonBody();
-check_required_fields($body, ["username"]);
+check_required_fields($body, ["username", "password"]);
 
 $username = $body["username"];
 $email    = $body["email"] ?? null;
+$passhash = password_hash($body["password"], PASSWORD_DEFAULT);
 
-/* Unieke username check */
+/* Unieke username? */
 $chk = $conn->prepare("SELECT id FROM app_users WHERE username = ?");
 $chk->bind_param("s", $username);
 $chk->execute();
@@ -18,8 +19,9 @@ if ($exists) {
 }
 
 /* Insert */
-$stmt = $conn->prepare("INSERT INTO app_users (username, email) VALUES (?, ?)");
-$stmt->bind_param("ss", $username, $email);
+$sql = "INSERT INTO app_users (username, password_hash, email) VALUES (?, ?, ?)";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("sss", $username, $passhash, $email);
 
 if ($stmt->execute()) {
   deliver_response(201, ["message" => "User added", "id" => $stmt->insert_id]);
