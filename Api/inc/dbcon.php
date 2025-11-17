@@ -6,8 +6,7 @@ $dbname = "ID476851_DavidOlusegunWM"; // naam databank (zie hosting ; zelf gekoz
 
 $conn = new mysqli($servername, $username, $password, $dbname);
 if ($conn->connect_error) {
-    // Als jouw base.php deliver_response gebruikt, kan je deze lijn gebruiken:
-    // deliver_response(500, ["error" => "Database connection failed: " . $conn->connect_error]);
+
 
     http_response_code(500);
     header("Content-Type: application/json");
