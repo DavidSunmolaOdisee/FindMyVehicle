@@ -1,8 +1,10 @@
 RewriteEngine On
+
 RewriteRule ^users/?$ users.php [L,NC,QSA]
 RewriteRule ^users/(.*)$ users.php?path=$1 [L,NC,QSA]
 
 RewriteRule ^vehicles/?$ vehicles.php [L,NC,QSA]
+RewriteRule ^vehicles/(.*)$ vehicles.php?path=$1 [L,NC,QSA]
 
 RewriteRule ^parkings/?$ parkings.php [L,NC,QSA]
-RewriteRule ^parkings/(.*)$ parkings.php?path=$1 [L,NC,QSA]  
+RewriteRule ^parkings/(.*)$ parkings.php?path=$1 [L,NC,QSA]

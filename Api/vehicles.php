@@ -1,8 +1,9 @@
 <?php
 require __DIR__ . '/inc/base.php';
-require __DIR__ . '/inc/dbcon.php';  // maakt $conn
-
+require __DIR__ . '/inc/dbcon.php';
 handle_preflight();
+
+$path = $_GET['path'] ?? trim($_SERVER['PATH_INFO'] ?? '', '/');
 
 switch ($_SERVER['REQUEST_METHOD']) {
   case 'GET':    require __DIR__ . '/inc/vehicles/get.php';    break;
