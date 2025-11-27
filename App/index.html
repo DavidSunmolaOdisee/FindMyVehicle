@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="css/login.css">
+    <title>Document</title>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Find My Vehicle</h1>
+            <p>Nooit meer uw voertuig kwijt</p>
+        </div>
+        
+        <div class="tabs">
+            <div class="tab active" onclick="showTab('login')">Inloggen</div>
+            <div class="tab" onclick="showTab('register')">Registreren</div>
+        </div>
+
+        <div class="form-container">
+            <!-- Login Form -->
+            <form id="loginForm" class="form active">
+                <div id="loginMessage" class="message"></div>
+                
+                <div class="form-group">
+                    <label for="loginUsername">Gebruikersnaam</label>
+                    <input type="text" id="loginUsername" placeholder="Voer uw gebruikersnaam in" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="loginPassword">Wachtwoord</label>
+                    <input type="password" id="loginPassword" placeholder="Voer uw wachtwoord in" required>
+                </div>
+                
+                <button type="submit" class="btn">Inloggen</button>
+                
+                <div class="forgot-password">
+                    <a href="#" onclick="showForgotPassword()">Wachtwoord vergeten?</a>
+                </div>
+            </form>
+
+            <!-- Registration Form -->
+            <form id="registerForm" class="form">
+                <div id="registerMessage" class="message"></div>
+                
+                <div class="form-group">
+                    <label for="regUsername">Gebruikersnaam</label>
+                    <input type="text" id="regUsername" placeholder="Kies een gebruikersnaam" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="regEmail">E-mail</label>
+                    <input type="email" id="regEmail" placeholder="Voer uw e-mailadres in" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="regPassword">Wachtwoord</label>
+                    <input type="password" id="regPassword" placeholder="Kies een wachtwoord" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="regConfirmPassword">Bevestig Wachtwoord</label>
+                    <input type="password" id="regConfirmPassword" placeholder="Herhaal uw wachtwoord" required>
+                </div>
+                
+                <button type="submit" class="btn">Account Aanmaken</button>
+            </form>
+
+            <!-- Forgot Password Form (Hidden by default) -->
+            <form id="forgotPasswordForm" class="form">
+                <div class="form-group">
+                    <label for="forgotEmail">E-mail</label>
+                    <input type="email" id="forgotEmail" placeholder="Voer uw e-mailadres in" required>
+                </div>
+                <button type="submit" class="btn">Wachtwoord Resetten</button>
+                <div class="forgot-password">
+                    <a href="#" onclick="showTab('login')">Terug naar inloggen</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/login.js"></script>
+</body>
+</html>
