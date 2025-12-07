@@ -172,7 +172,7 @@ async function registerHandler() {
   loading.value = true
   errorMessage.value = ''
 
-  // Updated validation - no confirm password check
+  // Updated validation - geen confirm wachtwoord check
   if (!registerData.value.username || !registerData.value.email || 
       !registerData.value.password) {
     errorMessage.value = "Vul alle velden in"
@@ -189,7 +189,7 @@ async function registerHandler() {
     
     await authService.register(userData)
     
-    // Auto-fill login and switch back
+    // Auto-fill login en switch terug naar login tab
     loginData.value.username = registerData.value.username
     loginData.value.password = registerData.value.password
     
@@ -200,7 +200,7 @@ async function registerHandler() {
       password: ''
     }
     
-    // Switch to login and show success
+    // Switch login en toon succes
     activeSegment.value = 'login'
     errorMessage.value = 'Registratie succesvol! Je kunt nu inloggen.'
     

@@ -12,21 +12,21 @@
         </ion-toolbar>
       </ion-header>
 
-       <!-- Add Vehicle Button -->
+       <!-- Add Voertuig Button -->
       <ion-fab vertical="top" horizontal="center" slot="fixed" edge>
         <ion-fab-button @click="openAddVehicleModal">
           <ion-icon :icon="add"></ion-icon>
         </ion-fab-button>
       </ion-fab>
 
-      <!-- Vehicles List -->
+      <!-- Voertuig List -->
       <ion-list>
         <ion-item-sliding v-for="vehicle in vehicles" :key="vehicle.id">
           <ion-item @click="viewVehicleDetails(vehicle)">
             <ion-thumbnail slot="start">
               <img v-if="vehicle.photo_url" :src="vehicle.photo_url" />
               <div v-else class="thumbnail-placeholder">
-                <ion-icon :icon="getVehicleIcon(vehicle.type)" size="large"></ion-icon>
+                <span>No Image</span>
               </div>
             </ion-thumbnail>
             
@@ -48,7 +48,7 @@
         </ion-item-sliding>
       </ion-list>
 
-       <!-- Add/Edit Vehicle Modal -->
+       <!-- Add/Edit Voertuig Modal -->
       <ion-modal :is-open="showVehicleModal" @didDismiss="closeVehicleModal">
         <ion-header>
           <ion-toolbar>
@@ -86,7 +86,7 @@
               <ion-label position="stacked">Beschrijving</ion-label>
               <ion-textarea 
                 v-model="vehicleForm.notes" 
-                placeholder="Bijv. Zwarte sedan, kenteken 1-ABC-123, opvallende stickers..."
+                placeholder="Bijv. Zwart, Stickers, etc."
                 rows="3"
               ></ion-textarea>
             </ion-item>
@@ -123,21 +123,20 @@
 </template>
 
 <script setup>
-import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonFab, IonFabButton, IonIcon, IonList, IonItemSliding, IonItem, IonThumbnail, IonLabel, IonItemOptions, IonItemOption, IonButton, IonModal, IonSelect, IonSelectOption, IonTextarea, IonAlert, IonSpinner, IonButtons } from '@ionic/vue';
+import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonFab, IonFabButton, IonIcon, IonList, IonItemSliding, IonItem, IonThumbnail, IonLabel, IonItemOptions, IonItemOption, IonButton, IonModal, IonSelect, IonSelectOption, IonTextarea, IonAlert, IonSpinner, IonButtons, IonInput } from '@ionic/vue';
 import { add, pencil, trash, } from 'ionicons/icons'
 import { ref, onMounted } from 'vue';
 import { authService } from '@/services/auth.js';
-import { apiGet } from '@/services/api.js';
+import { apiGet, apiPost, apiPut, apiDelete } from '@/services/api.js';
 
-const loading = ref(true)
 const vehicles = ref([])
 const showVehicleModal = ref(false)
 const isEditing = ref(false)
 const saving = ref(false)
 const showDeleteAlert = ref(false)
 const vehicleToDelete = ref(null)
-const errorMessage = ref('')
 
+// Form
 const vehicleForm = ref({
   id: null,
   type: '',
@@ -147,6 +146,7 @@ const vehicleForm = ref({
   photo_url: ''
 })
 
+// Alert buttons
 const deleteAlertButtons = [
   {
     text: 'Annuleren',
@@ -159,6 +159,7 @@ const deleteAlertButtons = [
   }
 ]
 
+// Helper function
 function getVehicleTypeDisplay(type) {
   const types = {
     car: 'Auto',
@@ -170,76 +171,38 @@ function getVehicleTypeDisplay(type) {
   return types[type] || type
 }
 
+// ==================== LOAD VEHICLES ====================
 async function loadVehicles() {
   try {
-    loading.value = true
-    errorMessage.value = ''
+    const user = authService.getCurrentUser()
     
-    // Get current user ID
-    const userId = authService.getUserId()
-    
-    if (!userId) {
-      errorMessage.value = 'Niet ingelogd'
-      console.error('No user ID found')
+    if (!user || !user.id) {
+      console.log('No user found')
       return
     }
     
+    const userId = user.id
     console.log('Loading vehicles for user ID:', userId)
     
-    // Call your API endpoint: /vehicle?user_id=1
-    const response = await apiGet(`vehicle?user_id=${userId}`)
+    const response = await apiGet(`vehicles.php?user_id=${userId}`)
+    console.log('Vehicles API response:', response)
     
-    console.log('API response for vehicles:', response)
-    
-    // Handle different response formats
     if (Array.isArray(response)) {
       vehicles.value = response
     } else if (response.data && Array.isArray(response.data)) {
       vehicles.value = response.data
     } else {
-      console.error('Unexpected API response format:', response)
+      console.log('Unexpected response format:', response)
       vehicles.value = []
     }
     
   } catch (error) {
-    console.error('Error loading vehicles:', error)
-    errorMessage.value = 'Fout bij laden voertuigen'
-    
-    // For development/testing - use mock data
-    vehicles.value = getMockVehicles()
-    
-  } finally {
-    loading.value = false
+    console.log('Error loading vehicles:', error)
+    vehicles.value = []
   }
 }
 
-// Temporary mock data for testing
-function getMockVehicles() {
-  const userId = authService.getUserId()
-  return [
-    {
-      id: 1,
-      user_id: userId || 1,
-      type: 'car',
-      brand: 'BMW',
-      model: '320i',
-      notes: 'Zwarte sedan',
-      photo_url: 'https://picsum.photos/id/1/400/200',
-      created_at: '2025-11-12 13:30:39'
-    },
-    {
-      id: 2,
-      user_id: userId || 1,
-      type: 'bike',
-      brand: 'Canyon',
-      model: 'Endurace',
-      notes: 'Racefiets voor weekend',
-      photo_url: 'https://picsum.photos/id/2/400/200',
-      created_at: '2025-11-12 13:30:39'
-    }
-  ]
-}
-
+// ==================== CREATE OPERATION ====================
 function openAddVehicleModal() {
   isEditing.value = false
   vehicleForm.value = {
@@ -253,8 +216,10 @@ function openAddVehicleModal() {
   showVehicleModal.value = true
 }
 
+// ==================== EDIT OPERATION ====================
 function editVehicle(vehicle) {
   isEditing.value = true
+  
   vehicleForm.value = {
     id: vehicle.id,
     type: vehicle.type,
@@ -263,41 +228,112 @@ function editVehicle(vehicle) {
     notes: vehicle.notes || '',
     photo_url: vehicle.photo_url || ''
   }
+  
+  console.log('Editing vehicle ID:', vehicle.id, 'Data:', vehicleForm.value)
+  
   showVehicleModal.value = true
+}
+
+// ==================== SAVE VEHICLE (CREATE OR UPDATE) ====================
+async function saveVehicle() {
+  saving.value = true
+  
+  try {
+    // 1. Haal huidige ingelogde gebruiker op
+    const user = authService.getCurrentUser()
+    
+    if (!user || !user.id) {
+      alert('Error: You are not logged in')
+      return
+    }
+    
+    // 2. data voor API
+    const vehicleData = {
+      user_id: user.id,
+      type: vehicleForm.value.type,
+      brand: vehicleForm.value.brand || null,
+      model: vehicleForm.value.model || null,
+      notes: vehicleForm.value.notes || null,
+      photo_url: vehicleForm.value.photo_url || null
+    }
+    
+    console.log('Sending vehicle data to API:', vehicleData)
+    
+    let response
+    
+    // 3. Create of Read Operatie
+    if (isEditing.value && vehicleForm.value.id) {
+      console.log('Updating vehicle with ID:', vehicleForm.value.id)
+      response = await apiPut(`vehicles.php?id=${vehicleForm.value.id}`, vehicleData)
+      alert('Voertuig succesvol bijgewerkt!')
+    } else {
+      console.log('Creating new vehicle')
+      response = await apiPost('vehicles.php', vehicleData)
+      alert('Voertuig succesvol toegevoegd!')
+    }
+    
+    console.log('API response:', response)
+    
+    // 4. Modal dicht doen
+    closeVehicleModal()
+    
+    // 5. Vernieuw de lijst met voertuigen
+    await loadVehicles()
+    
+  } catch (error) {
+    console.log('Error saving vehicle:', error)
+    alert('Fout bij opslaan: ' + error.message)
+  } finally {
+    saving.value = false
+  }
+}
+
+// ==================== DELETE VEHICLE ====================
+async function deleteVehicle() {
+  try {
+    if (!vehicleToDelete.value) {
+      console.log('No vehicle to delete')
+      return
+    }
+    
+    const vehicleId = vehicleToDelete.value.id
+    console.log('Deleting vehicle with ID:', vehicleId)
+    
+    const response = await apiDelete(`vehicles.php?id=${vehicleId}`)
+    console.log('Delete API response:', response)
+    
+    vehicles.value = vehicles.value.filter(v => v.id !== vehicleId)
+    
+    alert('Voertuig succesvol verwijderd!')
+    
+  } catch (error) {
+    console.log('Error deleting vehicle:', error)
+    alert('Fout bij verwijderen: ' + error.message)
+    
+    await loadVehicles()
+  } finally {
+    vehicleToDelete.value = null
+    showDeleteAlert.value = false
+  }
+}
+
+// ==================== CONFIRM DELETE ====================
+function confirmDelete(vehicle) {
+  vehicleToDelete.value = vehicle
+  showDeleteAlert.value = true
+  console.log('Confirm delete for vehicle:', vehicle)
+}
+
+// ==================== OTHER FUNCTIONS ====================
+function viewVehicleDetails(vehicle) {
+  console.log('View vehicle:', vehicle)
 }
 
 function closeVehicleModal() {
   showVehicleModal.value = false
 }
 
-function viewVehicleDetails(vehicle) {
-  console.log('View vehicle details:', vehicle)
-}
-
-function confirmDelete(vehicle) {
-  vehicleToDelete.value = vehicle
-  showDeleteAlert.value = true
-}
-
-async function saveVehicle() {
-  saving.value = true
-  console.log('Save vehicle:', vehicleForm.value)
-  
-  // Will implement API call later
-  await new Promise(resolve => setTimeout(resolve, 500)) // Simulate API delay
-  
-  saving.value = false
-  closeVehicleModal()
-}
-
-async function deleteVehicle() {
-  console.log('Delete vehicle:', vehicleToDelete.value)
-  // Will implement API call later
-  vehicleToDelete.value = null
-  showDeleteAlert.value = false
-}
-
-// Load vehicles when component mounts
+// ==================== INITIAL LOAD ====================
 onMounted(() => {
   loadVehicles()
 })

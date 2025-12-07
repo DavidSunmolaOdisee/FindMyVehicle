@@ -1,7 +1,7 @@
 import { apiPost } from './api.js';
 
 export const authService = {
-    // Login Function
+    // Login Functie   
     async login(username, password) {
         try {
             console.log("Login attempt for:", username);
@@ -14,6 +14,7 @@ export const authService = {
             console.log("Login response:", responseData);
 
             if (responseData.message === "Login successful" && responseData.user) {
+                console.log("Login attempt for:", responseData.user.id);
                 localStorage.setItem("currentUser", JSON.stringify(responseData.user));
                 return responseData;
             } else {
@@ -26,7 +27,7 @@ export const authService = {
         }
     },
 
-    // Registration Function
+    // Registratie Functie
     async register(userData) {
         try {
             console.log("Registration attempt:", userData);
@@ -56,11 +57,13 @@ export const authService = {
         return null;
     },
 
+    // Get User ID
     getUserId() {
         const user = this.getCurrentUser();
         return user ? user.id : null;
     },
 
+    // Check of gebruiker is ingelogd
     isAuthenticated() {
         return !!localStorage.getItem("currentUser");
     },
@@ -68,5 +71,12 @@ export const authService = {
     // Logout Function (NOG NIET GEBRUIKT)
     logout() {
         localStorage.removeItem("currentUser");
+    },
+
+    // Debug functie om huidige gebruiker te loggen | MOET WEG DOEN
+    debugAuth() {
+        const user = authService.getCurrentUser()
+        console.log('🔍 Current user in localStorage:', user)
+        console.log('🔍 User ID:', authService.getUserId())
     }
 };
