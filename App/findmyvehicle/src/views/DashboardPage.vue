@@ -53,7 +53,8 @@
                 <ion-card class="stat-card">
                   <ion-card-content>
                     <div class="stat-icon">
-                      <ion-icon :icon="navigateOutline"></ion-icon>
+                      <!-- duidelijk locatie-icoon voor actieve parkings -->
+                      <ion-icon :icon="locationOutline"></ion-icon>
                     </div>
                     <div class="stat-value">{{ activeParkings.length }}</div>
                   </ion-card-content>
@@ -73,22 +74,21 @@
             </ion-row>
           </ion-grid>
 
-          <!-- Actieve parkings -->
+          <!-- Actieve parkings (laatste 3) -->
           <ion-card>
             <ion-card-header>
               <ion-card-title>Actieve parkings</ion-card-title>
-              <ion-card-subtitle>Momenteel lopende sessies</ion-card-subtitle>
+              <ion-card-subtitle>Laatste 3 actieve parkings</ion-card-subtitle>
             </ion-card-header>
             <ion-card-content>
-              <ion-list v-if="activeParkings.length > 0">
-                <ion-item v-for="p in activeParkings" :key="p.id">
+              <ion-list v-if="activeParkingsLimited.length > 0">
+                <ion-item v-for="p in activeParkingsLimited" :key="p.id">
                   <ion-label>
                     <h2>Parking #{{ p.id }} - {{ p.level || 'Geen level' }}</h2>
                     <p>{{ p.description || 'Geen beschrijving' }}</p>
                     <p>Gestart: {{ formatDateTime(p.started_at) }}</p>
                     <p v-if="p.expires_at">
-                      Verloopt: {{ formatDateTime(p.expires_at) }}
-                    </p>
+                      Verloopt: {{ formatDateTime(p.expires_at) }}</p>
                   </ion-label>
                 </ion-item>
               </ion-list>
@@ -102,15 +102,15 @@
             </ion-card-content>
           </ion-card>
 
-          <!-- Historiek (afgesloten parkings) -->
+          <!-- Historiek (laatste 3 afgesloten) -->
           <ion-card>
             <ion-card-header>
               <ion-card-title>Parking historiek</ion-card-title>
-              <ion-card-subtitle>Reeds afgesloten sessies</ion-card-subtitle>
+              <ion-card-subtitle>Laatste 3 afgesloten parkings</ion-card-subtitle>
             </ion-card-header>
             <ion-card-content>
-              <ion-list v-if="finishedParkings.length > 0">
-                <ion-item v-for="p in finishedParkings" :key="p.id">
+              <ion-list v-if="finishedParkingsLimited.length > 0">
+                <ion-item v-for="p in finishedParkingsLimited" :key="p.id">
                   <ion-label>
                     <h2>Parking #{{ p.id }} - {{ p.level || 'Geen level' }}</h2>
                     <p>{{ p.description || 'Geen beschrijving' }}</p>
@@ -125,14 +125,15 @@
             </ion-card-content>
           </ion-card>
 
-          <!-- Voertuigen overzicht (met foto, zonder notities) -->
+          <!-- Voertuigen overzicht (laatste 3, met foto) -->
           <ion-card>
             <ion-card-header>
               <ion-card-title>Mijn voertuigen</ion-card-title>
+              <ion-card-subtitle>Laatste 3 voertuigen</ion-card-subtitle>
             </ion-card-header>
             <ion-card-content>
-              <ion-list v-if="vehicles.length > 0">
-                <ion-item v-for="v in vehicles" :key="v.id">
+              <ion-list v-if="vehiclesLimited.length > 0">
+                <ion-item v-for="v in vehiclesLimited" :key="v.id">
                   <ion-thumbnail slot="start">
                     <img v-if="v.photo_url" :src="v.photo_url" />
                     <div v-else class="thumbnail-placeholder">
@@ -191,16 +192,18 @@ import {
   IonLabel,
   IonButton,
   IonIcon,
-  IonThumbnail
+  IonThumbnail,
+  onIonViewWillEnter
 } from '@ionic/vue';
 
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed } from 'vue';
+
 import { authService } from '@/services/auth.js';
 import { apiGet } from '@/services/api.js';
 
 import {
   carOutline,
-  navigateOutline,
+  locationOutline,
   timeOutline,
   refreshOutline
 } from 'ionicons/icons';
@@ -212,6 +215,7 @@ const parkings = ref([]);
 const isLoading = ref(false);
 const errorMessage = ref('');
 
+// helpers
 function getVehicleTypeDisplay(type) {
   const types = {
     car: 'Auto',
@@ -230,6 +234,11 @@ const activeParkings = computed(() =>
 const finishedParkings = computed(() =>
   parkings.value.filter(p => p.closed_at !== null && p.closed_at !== undefined)
 );
+
+// laatste 3 per lijst
+const vehiclesLimited = computed(() => vehicles.value.slice(0, 3));
+const activeParkingsLimited = computed(() => activeParkings.value.slice(0, 3));
+const finishedParkingsLimited = computed(() => finishedParkings.value.slice(0, 3));
 
 function formatDateTime(value) {
   if (!value) return '';
@@ -287,7 +296,7 @@ async function loadDashboard() {
   }
 }
 
-onMounted(() => {
+onIonViewWillEnter(() => {
   loadDashboard();
 });
 </script>
@@ -311,11 +320,11 @@ onMounted(() => {
 /* Statistiek-kaartjes compacter maken */
 .stat-card {
   text-align: center;
-  margin: 0; /* standaard card-marge weg */
+  margin: 0;
 }
 
 .stat-card ion-card-content {
-  padding: 8px 4px; /* minder verticale padding */
+  padding: 8px 4px;
 }
 
 .stat-icon {
