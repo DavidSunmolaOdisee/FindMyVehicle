@@ -6,14 +6,9 @@
       </ion-toolbar>
     </ion-header>
     <ion-content :fullscreen="true">
-      <ion-header collapse="condense">
-        <ion-toolbar>
-          <ion-title size="large">Vehicles</ion-title>
-        </ion-toolbar>
-      </ion-header>
 
        <!-- Add Voertuig Button -->
-      <ion-fab vertical="top" horizontal="center" slot="fixed" edge>
+      <ion-fab vertical="bottom" horizontal="end" slot="fixed" >
         <ion-fab-button @click="openAddVehicleModal">
           <ion-icon :icon="add"></ion-icon>
         </ion-fab-button>
@@ -63,7 +58,7 @@
           <ion-list>
             <ion-item>
               <ion-label position="stacked">Type *</ion-label>
-              <ion-select v-model="vehicleForm.type" placeholder="Kies type" interface="action-sheet">
+              <ion-select v-model="vehicleForm.type" placeholder="Kies type" interface="popover">
                 <ion-select-option value="car">Auto</ion-select-option>
                 <ion-select-option value="bike">Fiets</ion-select-option>
                 <ion-select-option value="scooter">Scooter</ion-select-option>
@@ -129,6 +124,7 @@ import { ref, onMounted } from 'vue';
 import { authService } from '@/services/auth.js';
 import { apiGet, apiPost, apiPut, apiDelete } from '@/services/api.js';
 
+// Variables
 const vehicles = ref([])
 const showVehicleModal = ref(false)
 const isEditing = ref(false)
@@ -159,7 +155,7 @@ const deleteAlertButtons = [
   }
 ]
 
-// Helper function
+// Vehicle type function
 function getVehicleTypeDisplay(type) {
   const types = {
     car: 'Auto',
@@ -171,7 +167,25 @@ function getVehicleTypeDisplay(type) {
   return types[type] || type
 }
 
-// ==================== LOAD VEHICLES ====================
+// Vehicle modal functions
+function openAddVehicleModal() {
+  isEditing.value = false
+  vehicleForm.value = {
+    id: null,
+    type: '',
+    brand: '',
+    model: '',
+    notes: '',
+    photo_url: ''
+  }
+  showVehicleModal.value = true
+}
+
+function closeVehicleModal() {
+  showVehicleModal.value = false
+}
+
+// ==================== READ OPERATION ====================
 async function loadVehicles() {
   try {
     const user = authService.getCurrentUser()
@@ -202,20 +216,6 @@ async function loadVehicles() {
   }
 }
 
-// ==================== CREATE OPERATION ====================
-function openAddVehicleModal() {
-  isEditing.value = false
-  vehicleForm.value = {
-    id: null,
-    type: '',
-    brand: '',
-    model: '',
-    notes: '',
-    photo_url: ''
-  }
-  showVehicleModal.value = true
-}
-
 // ==================== EDIT OPERATION ====================
 function editVehicle(vehicle) {
   isEditing.value = true
@@ -234,7 +234,7 @@ function editVehicle(vehicle) {
   showVehicleModal.value = true
 }
 
-// ==================== SAVE VEHICLE (CREATE OR UPDATE) ====================
+// ==================== CREATE/UPDATE OPERATION ====================
 async function saveVehicle() {
   saving.value = true
   
@@ -329,12 +329,15 @@ function viewVehicleDetails(vehicle) {
   console.log('View vehicle:', vehicle)
 }
 
-function closeVehicleModal() {
-  showVehicleModal.value = false
-}
-
 // ==================== INITIAL LOAD ====================
 onMounted(() => {
   loadVehicles()
 })
 </script>
+
+<style>
+.ion-margin-top {
+  margin-top: 16px;
+  margin-bottom: 16px;
+}
+</style>

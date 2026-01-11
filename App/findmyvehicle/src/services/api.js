@@ -71,5 +71,5 @@ export {
     apiGet, 
     apiPut, 
     apiDelete, 
-    baseApiAddress 
+    baseApiAddress
 };

@@ -6,20 +6,16 @@
       </ion-toolbar>
     </ion-header>
     <ion-content :fullscreen="true">
-      <ion-header collapse="condense">
-        <ion-toolbar>
-          <ion-title size="large">Parkings</ion-title>
-        </ion-toolbar>
-      </ion-header>
 
-      <ion-fab vertical="top" horizontal="center" slot="fixed" edge>
-  <ion-fab-button @click="openAddParkingModal">
-    <ion-icon :icon="add"></ion-icon>
-  </ion-fab-button>
-</ion-fab>
+
+      <ion-fab vertical="bottom" horizontal="end" slot="fixed">
+        <ion-fab-button @click="openAddParkingModal">
+          <ion-icon :icon="add"></ion-icon>
+        </ion-fab-button>
+      </ion-fab>
+
       <div v-if="parkings.length === 0" class="ion-text-center ion-padding">
         <h3>Geen parkings</h3>
-        <p>Start je eerste parking</p>
         <ion-button @click="openAddParkingModal" class="ion-margin-top">
           Start Parking
         </ion-button>
@@ -34,13 +30,7 @@
               <p>Locatie: {{ formatLocation(parking) }}</p>
               <p v-if="parking.level">Verdieping: {{ parking.level }}</p>
               <p v-if="parking.description">{{ parking.description }}</p>
-              
-              <!-- Timer -->
-              <div v-if="parking.expires_at" class="timer">
-                Verloopt: {{ formatTimeRemaining(parking.expires_at) }}
-              </div>
-              
-              <!-- Google Maps Button -->
+              <p v-if="parking.expires_at">Verloopt: {{ formatTimeRemaining(parking.expires_at) }}</p>
               <ion-button 
                 expand="block" 
                 size="small" 
@@ -54,20 +44,20 @@
 
           <ion-item-options side="end">
             <ion-item-option color="primary" @click="editParking(parking)">
-              Bewerk
+              <ion-icon slot="icon-only" :icon="pencil"></ion-icon>
             </ion-item-option>
-            <ion-item-option color="danger" @click="confirmDeleteParking(parking)">
-              Verwijder
+            <ion-item-option color="danger" @click="deleteParking(parking)">
+              <ion-icon slot="icon-only" :icon="trash"></ion-icon>
             </ion-item-option>
           </ion-item-options>
         </ion-item-sliding>
       </ion-list>
 
-      <!-- Add Parkng -->
+      <!-- Add/Edit Modal -->
       <ion-modal :is-open="showParkingModal" @didDismiss="closeParkingModal">
         <ion-header>
           <ion-toolbar>
-            <ion-title>Start Nieuwe Parking</ion-title>
+            <ion-title>{{ isEditing ? 'Parking Bewerken' : 'Start Nieuwe Parking' }}</ion-title>
             <ion-buttons slot="end">
               <ion-button @click="closeParkingModal">Sluiten</ion-button>
             </ion-buttons>
@@ -76,15 +66,9 @@
         
         <ion-content class="ion-padding">
           <ion-list>
-            <!-- Vehicle Selection -->
             <ion-item>
               <ion-label position="stacked">Voertuig *</ion-label>
-              <ion-select 
-                v-model="parkingForm.vehicle_id" 
-                placeholder="Kies voertuig" 
-                interface="action-sheet" 
-                required
-              >
+              <ion-select v-model="parkingForm.vehicle_id" required>
                 <ion-select-option 
                   v-for="vehicle in userVehicles" 
                   :key="vehicle.id" 
@@ -95,76 +79,44 @@
               </ion-select>
             </ion-item>
 
-            <!-- Location -->
             <ion-item>
               <ion-label position="stacked">Locatie *</ion-label>
-              <div class="location-controls">
-                <ion-button 
-                  expand="block" 
-                  color="primary" 
-                  @click="getCurrentLocation"
-                  :disabled="gettingLocation"
-                >
-                  <ion-spinner v-if="gettingLocation" name="crescent"></ion-spinner>
-                  <span v-else>📍 Gebruik huidige locatie</span>
-                </ion-button>
-                
-                <div v-if="parkingForm.latitude && parkingForm.longitude" class="coordinates-info">
-                  <ion-text color="success">
-                    <p>Locatie opgeslagen!</p>
-                    <p>{{ parkingForm.latitude.toFixed(6) }}, {{ parkingForm.longitude.toFixed(6) }}</p>
-                  </ion-text>
-                </div>
-                
-                <div v-else class="coordinates-info">
-                  <ion-text color="warning">
-                    <p>Klik op de knop om uw huidige locatie te gebruiken</p>
-                  </ion-text>
-                </div>
+              <ion-button expand="block" @click="getCurrentLocation" :disabled="gettingLocation">
+                <ion-spinner v-if="gettingLocation" name="crescent"></ion-spinner>
+                <span v-else>📍 Gebruik huidige locatie</span>
+              </ion-button>
+              <div v-if="parkingForm.latitude" class="ion-margin-top">
+                <ion-text color="success">
+                  <small>Locatie: {{ parkingForm.latitude.toFixed(6) }}, {{ parkingForm.longitude.toFixed(6) }}</small>
+                </ion-text>
               </div>
             </ion-item>
 
-            <!-- Parking Level -->
             <ion-item>
               <ion-label position="stacked">Verdieping/Zone</ion-label>
-              <ion-input 
-                v-model="parkingForm.level" 
-                placeholder="Bijv. P-1, Zone A, Buiten"
-              ></ion-input>
+              <ion-input v-model="parkingForm.level" placeholder="Bijv. P-1"></ion-input>
             </ion-item>
 
-            <!-- Description -->
             <ion-item>
               <ion-label position="stacked">Beschrijving</ion-label>
-              <ion-textarea 
-                v-model="parkingForm.description" 
-                placeholder="Bijv. Naast lift, onder boom, dicht bij uitgang..."
-                rows="3"
-              ></ion-textarea>
+              <ion-textarea v-model="parkingForm.description" rows="3"></ion-textarea>
             </ion-item>
 
-            <!-- Expiration Time (optional) -->
             <ion-item>
               <ion-label position="stacked">Verlooptijd (optioneel)</ion-label>
-              <ion-input 
-                v-model="parkingForm.expires_at" 
-                type="datetime-local"
-                :min="minDateTime"
-              ></ion-input>
+              <ion-input v-model="parkingForm.expires_at" type="datetime-local"></ion-input>
             </ion-item>
           </ion-list>
 
           <ion-button 
             expand="block" 
             @click="saveParking" 
-            :disabled="!parkingForm.vehicle_id || !parkingForm.latitude || !parkingForm.longitude || saving"
+            :disabled="!parkingForm.vehicle_id || !parkingForm.latitude"
             class="ion-margin-top"
           >
             <ion-spinner v-if="saving" name="crescent"></ion-spinner>
-            <span v-else>Start Parking</span>
+            <span v-else>{{ isEditing ? 'Opslaan' : 'Start Parking' }}</span>
           </ion-button>
-          <!-- Add Parkng Modal -->
-
         </ion-content>
       </ion-modal>
     </ion-content>
@@ -173,27 +125,21 @@
 
 <script setup>
 import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonButton, IonList, IonItemSliding, IonItem, IonItemOptions, IonItemOption, IonLabel, IonModal, IonButtons, IonSelect, IonSelectOption, IonSpinner, IonText, IonInput, IonTextarea, IonFab, IonFabButton, IonIcon } from '@ionic/vue';
-
-import { ref, onMounted, computed } from 'vue';
-
-import { add } from 'ionicons/icons';
+import { ref, onMounted } from 'vue';
+import { add, pencil, trash } from 'ionicons/icons';
 import { authService } from '@/services/auth.js';
-import { apiGet, apiPost } from '@/services/api.js';
-// import { Geolocation } from '@capacitor/geolocation';
-
+import { apiGet, apiPost, apiPut, apiDelete } from '@/services/api.js';
+import { Geolocation } from '@capacitor/geolocation';
 
 // State
-const parkings = ref([])
-const userVehicles = ref([])
-const showParkingModal = ref(false)
-const saving = ref(false)
-const gettingLocation = ref(false)
-
-const minDateTime = computed(() => {
-  const now = new Date();
-  now.setMinutes(now.getMinutes() + 5); // Minimum 5 minutes from now
-  return now.toISOString().slice(0, 16);
-})
+const parkings = ref([]);
+const userVehicles = ref([]);
+const vehiclesMap = ref({});
+const showParkingModal = ref(false);
+const saving = ref(false);
+const gettingLocation = ref(false);
+const currentParkingId = ref(null);
+const isEditing = ref(false);
 
 // Form
 const parkingForm = ref({
@@ -203,283 +149,109 @@ const parkingForm = ref({
   level: '',
   description: '',
   expires_at: null
-})
+});
 
 // Helper functions
 function formatLocation(parking) {
-  try {
-    if (parking.latitude && parking.longitude) {
-      const lat = parseFloat(parking.latitude);
-      const lng = parseFloat(parking.longitude);
-      
-      if (isNaN(lat) || isNaN(lng)) {
-        return 'Ongeldige locatie';
-      }
-      
-      return `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
-    }
-    return 'Geen locatie';
-  } catch (error) {
-    console.log('Error formatting location:', error);
-    return 'Locatie fout';
+  if (parking.latitude && parking.longitude) {
+    return `${parseFloat(parking.latitude).toFixed(4)}, ${parseFloat(parking.longitude).toFixed(4)}`;
   }
+  return 'Geen locatie';
 }
 
 function formatTimeRemaining(expiresAt) {
   if (!expiresAt) return '';
-  
-  const now = new Date();
-  const expires = new Date(expiresAt);
-  const diff = expires - now;
-  
+  const diff = new Date(expiresAt) - new Date();
   if (diff <= 0) return 'Verlopen';
-  
   const hours = Math.floor(diff / (1000 * 60 * 60));
   const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-  
   return `${hours} uur ${minutes} min`;
 }
 
-function getVehicleName(vehicleId) {
-  return `Voertuig:${vehicleId}`;
-}
-
 function getVehicleTypeDisplay(type) {
-  const types = {
-    car: 'Auto',
-    bike: 'Fiets',
-    scooter: 'Scooter',
-    motor: 'Motor',
-    other: 'Anders'
-  }
-  return types[type] || type
+  const types = { car: 'Auto', bike: 'Fiets', scooter: 'Scooter', motor: 'Motor', other: 'Anders' };
+  return types[type] || type;
 }
 
-// GOOGLE MAPS FUNCTION
+function getVehicleName(vehicleId) {
+  const vehicle = vehiclesMap.value[vehicleId];
+  if (!vehicle) return `Voertuig #${vehicleId}`;
+  let name = vehicle.brand && vehicle.model ? `${vehicle.brand} ${vehicle.model}` : vehicle.brand || vehicle.model || getVehicleTypeDisplay(vehicle.type);
+  const typeDisplay = getVehicleTypeDisplay(vehicle.type);
+  if (name !== typeDisplay) name += ` (${typeDisplay})`;
+  return name;
+}
+
 function openGoogleMaps(parking) {
+  const lat = parseFloat(parking.latitude);
+  const lng = parseFloat(parking.longitude);
+  if (isNaN(lat) || isNaN(lng)) return alert('Geen geldige locatie');
+  window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving`, '_blank');
+}
+
+// Location
+async function getCurrentLocation() {
+  gettingLocation.value = true;
   try {
-    const lat = parseFloat(parking.latitude);
-    const lng = parseFloat(parking.longitude);
-    
-    if (isNaN(lat) || isNaN(lng)) {
-      alert('Geen geldige locatie beschikbaar voor deze parking');
-      return;
+    const permission = await Geolocation.checkPermissions();
+    if (permission.location !== 'granted') {
+      const request = await Geolocation.requestPermissions();
+      if (request.location !== 'granted') return alert('Locatietoestemming nodig');
     }
-    
-    // Create Google Maps URL for navigation
-    const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving`;
-    
-    // Open in new tab
-    window.open(mapsUrl, '_blank');
-    console.log('Opening Google Maps to:', lat, lng);
-    
+    const position = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 15000 });
+    parkingForm.value.latitude = position.coords.latitude;
+    parkingForm.value.longitude = position.coords.longitude;
   } catch (error) {
-    console.log('Error opening Google Maps:', error);
-    alert('Kon Google Maps niet openen');
+    console.error('Geolocation error:', error);
+    alert('Kon locatie niet bepalen');
+  } finally {
+    gettingLocation.value = false;
   }
 }
 
-// READ OPERATION: Load parkings
+// Load vehicles
+async function loadUserVehicles() {
+  try {
+    const user = authService.getCurrentUser();
+    if (!user?.id) return;
+    const response = await apiGet(`vehicles.php?user_id=${user.id}`);
+    const vehiclesData = Array.isArray(response) ? response : response.data || [];
+    userVehicles.value = vehiclesData;
+    vehiclesMap.value = vehiclesData.reduce((map, vehicle) => {
+      if (vehicle.id) map[vehicle.id] = vehicle;
+      return map;
+    }, {});
+  } catch (error) {
+    console.log('Error loading vehicles:', error);
+    userVehicles.value = [];
+    vehiclesMap.value = {};
+  }
+}
+
+// Load parkings
 async function loadParkings() {
   try {
     const user = authService.getCurrentUser();
-    
-    if (!user || !user.id) {
-      console.log('User not logged in');
-      return;
-    }
-    
-    const userId = user.id;
-    console.log('Loading parkings for user ID:', userId);
-    
-    const response = await apiGet(`parkings.php?user_id=${userId}&active=1`);
-    console.log('All parkings API response:', response);
-      
-    // Handle response format
-    let parkingsData = [];
-    
-    if (Array.isArray(response)) {
-      parkingsData = response;
-    } else if (response.data && Array.isArray(response.data)) {
-      parkingsData = response.data;
-    } else {
-      console.log('Unexpected response format:', response);
-      parkingsData = [];
-    }
-    
-    parkings.value = parkingsData;
-    
-    console.log('Loaded parkings:', parkings.value);
-    
+    if (!user?.id) return;
+    await loadUserVehicles();
+    const response = await apiGet(`parkings.php?user_id=${user.id}`);
+    const parkingsData = Array.isArray(response) ? response : response.data || [];
+    const now = new Date();
+    parkings.value = parkingsData.filter(p => 
+      !p.closed_at && (!p.expires_at || new Date(p.expires_at) > now)
+    );
   } catch (error) {
     console.log('Error loading parkings:', error);
     parkings.value = [];
   }
 }
 
-
-
-function editParking(parking) {
-  console.log('Edit parking:', parking);
-  alert('Bewerken komt later');
-}
-
-function confirmDeleteParking(parking) {
-  console.log('Delete parking:', parking);
-  alert('Verwijderen komt later');
-}
-
-
-
-
-// GET CURRENT LOCATION
-async function getCurrentLocation() {
-  if (!navigator.geolocation) {
-    alert('Geolocatie wordt niet ondersteund in uw browser');
-    return;
-  }
-  
-  gettingLocation.value = true;
-  
-  try {
-    const position = await new Promise((resolve, reject) => {
-      navigator.geolocation.getCurrentPosition(resolve, reject, {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 0
-      });
-    });
-    
-    parkingForm.value.latitude = position.coords.latitude;
-    parkingForm.value.longitude = position.coords.longitude;
-    
-    console.log('Location obtained:', {
-      lat: position.coords.latitude,
-      lng: position.coords.longitude,
-      accuracy: position.coords.accuracy + ' meters'
-    });
-    
-  } catch (error) {
-    console.log('Geolocation error:', error);
-    
-    let errorMessage = 'Kon locatie niet ophalen';
-    switch(error.code) {
-      case 1:
-        errorMessage = 'Locatie toestemming geweigerd. Sta toegang toe in browser instellingen.';
-        break;
-      case 2:
-        errorMessage = 'Locatie niet beschikbaar. Controleer of GPS aan staat.';
-        break;
-      case 3:
-        errorMessage = 'Timeout bij ophalen locatie. Probeer opnieuw.';
-        break;
-    }
-    
-    alert(errorMessage);
-    
-    parkingForm.value.latitude = 51.2194;
-    parkingForm.value.longitude = 4.4025;
-    console.log('Using fallback location for testing');
-    
-  } finally {
-    gettingLocation.value = false;
-  }
-}
-
-async function saveParking() {
-  saving.value = true;
-  
-  try {
-    const user = authService.getCurrentUser();
-    
-    if (!user || !user.id) {
-      alert('Error: Je bent niet ingelogd');
-      return;
-    }
-    
-    if (!parkingForm.value.latitude || !parkingForm.value.longitude) {
-      alert('Error: Geen locatie ingesteld. Gebruik "huidige locatie" knop.');
-      return;
-    }
-    
-    if (!parkingForm.value.vehicle_id) {
-      alert('Error: Selecteer een voertuig');
-      return;
-    }
-    
-    // Prepare data for API
-    const parkingData = {
-      user_id: user.id,
-      vehicle_id: parkingForm.value.vehicle_id,
-      latitude: parseFloat(parkingForm.value.latitude),
-      longitude: parseFloat(parkingForm.value.longitude),
-      level: parkingForm.value.level || null,
-      description: parkingForm.value.description || null,
-      expires_at: parkingForm.value.expires_at || null
-
-    };
-    
-    console.log('Sending parking data:', parkingData);
-    
-    // POST /parkings
-    const response = await apiPost('parkings.php', parkingData);
-    console.log('Parking created:', response);
-    
-    // Succes
-    alert('Parking succesvol gestart!');
-    
-    // Close modal reset form
-    closeParkingModal();
-    
-    // Refresh parkings list
-    await loadParkings();
-    
-  } catch (error) {
-    console.log('Error saving parking:', error);
-    alert('Fout bij starten parking: ' + error.message);
-  } finally {
-    saving.value = false;
-  }
-}
-
-// Load vehicles for dropdown
-async function loadUserVehicles() {
-  try {
-    const user = authService.getCurrentUser();
-    
-    if (!user || !user.id) return;
-    
-    const response = await apiGet(`vehicles.php?user_id=${user.id}`);
-    
-    if (Array.isArray(response)) {
-      userVehicles.value = response;
-    } else if (response.data && Array.isArray(response.data)) {
-      userVehicles.value = response.data;
-    }
-    
-    console.log('Loaded vehicles for dropdown:', userVehicles.value.length);
-    
-  } catch (error) {
-    console.log('Error loading vehicles:', error);
-    userVehicles.value = [];
-  }
-}
-
-// Modal functies
+// Modal functions
 function openAddParkingModal() {
-  // Load vehicles eerst
   loadUserVehicles();
-  
-  // Reset form
-  parkingForm.value = {
-    vehicle_id: null,
-    latitude: null,
-    longitude: null,
-    level: '',
-    description: '',
-    expires_at: null
-  };
-  
+  parkingForm.value = { vehicle_id: null, latitude: null, longitude: null, level: '', description: '', expires_at: null };
+  isEditing.value = false;
+  currentParkingId.value = null;
   showParkingModal.value = true;
 }
 
@@ -487,10 +259,88 @@ function closeParkingModal() {
   showParkingModal.value = false;
 }
 
+// Edit
+function editParking(parking) {
+  loadUserVehicles();
+  currentParkingId.value = parking.id;
+  isEditing.value = true;
+  parkingForm.value = {
+    vehicle_id: parking.vehicle_id,
+    latitude: parseFloat(parking.latitude),
+    longitude: parseFloat(parking.longitude),
+    level: parking.level || '',
+    description: parking.description || '',
+    expires_at: parking.expires_at ? new Date(parking.expires_at).toISOString().slice(0, 16) : null
+  };
+  showParkingModal.value = true;
+}
+
+// Save
+async function saveParking() {
+  if (!parkingForm.value.vehicle_id || !parkingForm.value.latitude) {
+    alert('Selecteer voertuig en locatie');
+    return;
+  }
+  
+  saving.value = true;
+  try {
+    const user = authService.getCurrentUser();
+    if (!user?.id) return alert('Niet ingelogd');
+    
+    const parkingData = {
+      vehicle_id: parseInt(parkingForm.value.vehicle_id),
+      latitude: parseFloat(parkingForm.value.latitude),
+      longitude: parseFloat(parkingForm.value.longitude),
+      level: parkingForm.value.level || null,
+      description: parkingForm.value.description || null,
+      expires_at: parkingForm.value.expires_at || null
+    };
+    
+    let response;
+    if (isEditing.value && currentParkingId.value) {
+      // Update
+      parkingData.user_id = user.id;
+      response = await apiPut(`parkings.php?id=${currentParkingId.value}`, parkingData);
+      alert('Parking bijgewerkt!');
+    } else {
+      // Create
+      parkingData.user_id = user.id;
+      response = await apiPost('parkings.php', parkingData);
+      alert('Parking gestart!');
+    }
+    
+    closeParkingModal();
+    await loadParkings();
+  } catch (error) {
+    console.log('Error saving:', error);
+    alert('Fout: ' + error.message);
+  } finally {
+    saving.value = false;
+  }
+}
+
+// Delete
+async function deleteParking(parking) {
+  if (!confirm(`Weet je zeker dat je deze parking wilt verwijderen?\n${getVehicleName(parking.vehicle_id)} - ${formatLocation(parking)}`)) return;
+  
+  try {
+    await apiDelete(`parkings.php?id=${parking.id}`);
+    parkings.value = parkings.value.filter(p => p.id !== parking.id);
+    alert('Parking verwijderd!');
+  } catch (error) {
+    console.log('Delete error:', error);
+    alert('Fout bij verwijderen');
+  }
+}
 
 // Initial load
 onMounted(() => {
   loadParkings();
 });
-
 </script>
+
+<style>
+.ion-margin-top {
+  margin-top: 16px;
+}
+</style>
