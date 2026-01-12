@@ -3,6 +3,12 @@
     <ion-header>
       <ion-toolbar>
         <ion-title>Vehicles</ion-title>
+        <ion-buttons slot="end">
+          <p class="logout-text">Logout</p>
+          <ion-button @click="logout" fill="outline" color="danger">
+            <ion-icon slot="icon-only" :icon="logOut"></ion-icon>
+          </ion-button>
+        </ion-buttons>
       </ion-toolbar>
     </ion-header>
     <ion-content :fullscreen="true">
@@ -119,7 +125,7 @@
 
 <script setup>
 import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonFab, IonFabButton, IonIcon, IonList, IonItemSliding, IonItem, IonThumbnail, IonLabel, IonItemOptions, IonItemOption, IonButton, IonModal, IonSelect, IonSelectOption, IonTextarea, IonAlert, IonSpinner, IonButtons, IonInput } from '@ionic/vue';
-import { add, pencil, trash, } from 'ionicons/icons'
+import { add, pencil, trash, logOut } from 'ionicons/icons'
 import { ref, onMounted } from 'vue';
 import { authService } from '@/services/auth.js';
 import { apiGet, apiPost, apiPut, apiDelete } from '@/services/api.js';
@@ -154,6 +160,11 @@ const deleteAlertButtons = [
     handler: () => deleteVehicle()
   }
 ]
+
+// ==================== HELP FUNCTIONS ====================
+function viewVehicleDetails(vehicle) {
+  console.log('View vehicle:', vehicle)
+}
 
 // Vehicle type function
 function getVehicleTypeDisplay(type) {
@@ -216,7 +227,7 @@ async function loadVehicles() {
   }
 }
 
-// ==================== EDIT OPERATION ====================
+// ==================== UPDATE OPERATION ====================
 function editVehicle(vehicle) {
   isEditing.value = true
   
@@ -288,7 +299,7 @@ async function saveVehicle() {
   }
 }
 
-// ==================== DELETE VEHICLE ====================
+// ==================== DELETE OPERATION ====================
 async function deleteVehicle() {
   try {
     if (!vehicleToDelete.value) {
@@ -324,20 +335,27 @@ function confirmDelete(vehicle) {
   console.log('Confirm delete for vehicle:', vehicle)
 }
 
-// ==================== OTHER FUNCTIONS ====================
-function viewVehicleDetails(vehicle) {
-  console.log('View vehicle:', vehicle)
+// Logout functie
+function logout() {
+  if (confirm('Weet je zeker dat je wilt uitloggen?')) {
+    authService.logout();
+    window.location.href = '/login';
+  }
 }
 
-// ==================== INITIAL LOAD ====================
+// Initial load
 onMounted(() => {
   loadVehicles()
 })
 </script>
 
-<style>
+<style scoped>
 .ion-margin-top {
   margin-top: 16px;
   margin-bottom: 16px;
+}
+
+.logout-text {
+  margin-right: 8px;
 }
 </style>

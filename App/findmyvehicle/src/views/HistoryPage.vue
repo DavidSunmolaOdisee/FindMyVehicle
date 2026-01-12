@@ -2,15 +2,17 @@
   <ion-page>
     <ion-header>
       <ion-toolbar>
-        <ion-title>History</ion-title>
+        <ion-title>Historiek</ion-title>
+        <ion-buttons slot="end">
+          <p class="logout-text">Logout</p>
+          <ion-button @click="logout" fill="outline" color="danger">
+            <ion-icon slot="icon-only" :icon="logOut"></ion-icon>
+          </ion-button>
+        </ion-buttons>
       </ion-toolbar>
     </ion-header>
     <ion-content :fullscreen="true">
-      <ion-header collapse="condense">
-        <ion-toolbar>
-          <ion-title size="large">Historiek</ion-title>
-        </ion-toolbar>
-      </ion-header>
+      
 
 
       <div v-if="historyParkings.length === 0" class="ion-text-center ion-padding">
@@ -75,11 +77,10 @@
       <ion-alert
         :is-open="showDeleteAlert"
         header="Verwijderen uit Geschiedenis"
-        message="Weet je zeker dat je deze parking uit de geschiedenis wilt verwijderen?"
+        message="Ben je zeker dat je deze parking uit de geschiedenis wilt verwijderen?"
         :buttons="deleteAlertButtons"
         @didDismiss="showDeleteAlert = false"
       ></ion-alert>
-      
     </ion-content>
   </ion-page>
 </template>
@@ -88,7 +89,8 @@
 import { ref, onMounted, computed } from 'vue';
 import { authService } from '@/services/auth.js';
 import { apiGet, apiDelete } from '@/services/api.js';
-import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonList, IonItemSliding, IonItem, IonLabel, IonItemOptions, IonItemOption, IonButton, IonAlert } from '@ionic/vue';
+import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonList, IonItemSliding, IonItem, IonLabel, IonItemOptions, IonItemOption, IonButton, IonAlert, IonButtons, IonIcon } from '@ionic/vue';
+import { logOut } from 'ionicons/icons'
 
 // State
 const historyParkings = ref([])
@@ -367,8 +369,23 @@ async function deleteHistoryParking() {
   }
 }
 
+// Logout functie
+function logout() {
+  if (confirm('Weet je zeker dat je wilt uitloggen?')) {
+    authService.logout();
+    window.location.href = '/login';
+  }
+}
+
 // Initial load
 onMounted(() => {
   loadHistoryParkings();
 });
 </script>
+
+<style scoped>
+
+.logout-text {
+  margin-right: 8px;
+}
+</style>

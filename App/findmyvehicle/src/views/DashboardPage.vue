@@ -3,16 +3,16 @@
     <ion-header>
       <ion-toolbar>
         <ion-title>Dashboard</ion-title>
+          <ion-buttons slot="end">
+          <p class="logout-text">Logout</p>
+            <ion-button @click="logout" fill="outline" color="danger">
+              <ion-icon slot="icon-only" :icon="logOut"></ion-icon>
+            </ion-button>
+          </ion-buttons>
       </ion-toolbar>
     </ion-header>
-
     <ion-content :fullscreen="true">
-      <ion-header collapse="condense">
-        <ion-toolbar>
-          <ion-title size="large">Dashboard</ion-title>
-        </ion-toolbar>
-      </ion-header>
-
+      
       <div class="ion-padding">
 
         <!-- Foutmelding -->
@@ -193,7 +193,8 @@ import {
   IonButton,
   IonIcon,
   IonThumbnail,
-  onIonViewWillEnter
+  onIonViewWillEnter,
+  IonButtons
 } from '@ionic/vue';
 
 import { ref, computed } from 'vue';
@@ -205,7 +206,8 @@ import {
   carOutline,
   locationOutline,
   timeOutline,
-  refreshOutline
+  refreshOutline,
+  logOut
 } from 'ionicons/icons';
 
 const username = ref('User');
@@ -296,6 +298,14 @@ async function loadDashboard() {
   }
 }
 
+// Logout functie
+function logout() {
+  if (confirm('Weet je zeker dat je wilt uitloggen?')) {
+    authService.logout();
+    window.location.href = '/login';
+  }
+}
+
 onIonViewWillEnter(() => {
   loadDashboard();
 });
@@ -354,5 +364,9 @@ onIonViewWillEnter(() => {
   justify-content: center;
   font-size: 20px;
   opacity: 0.6;
+}
+
+.logout-text {
+  margin-right: 8px;
 }
 </style>

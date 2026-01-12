@@ -2,12 +2,18 @@
   <ion-page>
     <ion-header>
       <ion-toolbar>
-        <ion-title>Parkings</ion-title>
+        <ion-title>Dashboard</ion-title>
+        <ion-buttons slot="end">
+          <p class="logout-text">Logout</p>
+          <ion-button @click="logout" fill="outline" color="danger">
+            <ion-icon slot="icon-only" :icon="logOut"></ion-icon>
+          </ion-button>
+        </ion-buttons>
       </ion-toolbar>
     </ion-header>
     <ion-content :fullscreen="true">
 
-
+      <!-- Add Parking Button -->
       <ion-fab vertical="bottom" horizontal="end" slot="fixed">
         <ion-fab-button @click="openAddParkingModal">
           <ion-icon :icon="add"></ion-icon>
@@ -126,7 +132,7 @@
 <script setup>
 import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonButton, IonList, IonItemSliding, IonItem, IonItemOptions, IonItemOption, IonLabel, IonModal, IonButtons, IonSelect, IonSelectOption, IonSpinner, IonText, IonInput, IonTextarea, IonFab, IonFabButton, IonIcon } from '@ionic/vue';
 import { ref, onMounted } from 'vue';
-import { add, pencil, trash } from 'ionicons/icons';
+import { add, pencil, trash, logOut } from 'ionicons/icons';
 import { authService } from '@/services/auth.js';
 import { apiGet, apiPost, apiPut, apiDelete } from '@/services/api.js';
 import { Geolocation } from '@capacitor/geolocation';
@@ -159,6 +165,20 @@ function formatLocation(parking) {
   return 'Geen locatie';
 }
 
+// Modal functions
+function openAddParkingModal() {
+  loadUserVehicles();
+  parkingForm.value = { vehicle_id: null, latitude: null, longitude: null, level: '', description: '', expires_at: null };
+  isEditing.value = false;
+  currentParkingId.value = null;
+  showParkingModal.value = true;
+}
+
+function closeParkingModal() {
+  showParkingModal.value = false;
+}
+
+// Time formatting
 function formatTimeRemaining(expiresAt) {
   if (!expiresAt) return '';
   const diff = new Date(expiresAt) - new Date();
@@ -168,11 +188,13 @@ function formatTimeRemaining(expiresAt) {
   return `${hours} uur ${minutes} min`;
 }
 
+// Vehicle type function
 function getVehicleTypeDisplay(type) {
   const types = { car: 'Auto', bike: 'Fiets', scooter: 'Scooter', motor: 'Motor', other: 'Anders' };
   return types[type] || type;
 }
 
+// Vehicle name function
 function getVehicleName(vehicleId) {
   const vehicle = vehiclesMap.value[vehicleId];
   if (!vehicle) return `Voertuig #${vehicleId}`;
@@ -182,6 +204,7 @@ function getVehicleName(vehicleId) {
   return name;
 }
 
+// Google maps function
 function openGoogleMaps(parking) {
   const lat = parseFloat(parking.latitude);
   const lng = parseFloat(parking.longitude);
@@ -189,7 +212,7 @@ function openGoogleMaps(parking) {
   window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving`, '_blank');
 }
 
-// Location
+// Location fucntion
 async function getCurrentLocation() {
   gettingLocation.value = true;
   try {
@@ -209,7 +232,7 @@ async function getCurrentLocation() {
   }
 }
 
-// Load vehicles
+// Load vehicles function
 async function loadUserVehicles() {
   try {
     const user = authService.getCurrentUser();
@@ -228,7 +251,7 @@ async function loadUserVehicles() {
   }
 }
 
-// Load parkings
+// ==================== READ OPERATION ====================
 async function loadParkings() {
   try {
     const user = authService.getCurrentUser();
@@ -246,20 +269,7 @@ async function loadParkings() {
   }
 }
 
-// Modal functions
-function openAddParkingModal() {
-  loadUserVehicles();
-  parkingForm.value = { vehicle_id: null, latitude: null, longitude: null, level: '', description: '', expires_at: null };
-  isEditing.value = false;
-  currentParkingId.value = null;
-  showParkingModal.value = true;
-}
-
-function closeParkingModal() {
-  showParkingModal.value = false;
-}
-
-// Edit
+// ==================== UPDATE OPERATION ====================
 function editParking(parking) {
   loadUserVehicles();
   currentParkingId.value = parking.id;
@@ -275,7 +285,7 @@ function editParking(parking) {
   showParkingModal.value = true;
 }
 
-// Save
+// ==================== CREATE/UPDATE OPERATION ====================
 async function saveParking() {
   if (!parkingForm.value.vehicle_id || !parkingForm.value.latitude) {
     alert('Selecteer voertuig en locatie');
@@ -305,6 +315,7 @@ async function saveParking() {
     } else {
       // Create
       parkingData.user_id = user.id;
+      // eslint-disable-next-line no-unused-vars
       response = await apiPost('parkings.php', parkingData);
       alert('Parking gestart!');
     }
@@ -319,7 +330,7 @@ async function saveParking() {
   }
 }
 
-// Delete
+// ==================== DELETE OPERATION ====================
 async function deleteParking(parking) {
   if (!confirm(`Weet je zeker dat je deze parking wilt verwijderen?\n${getVehicleName(parking.vehicle_id)} - ${formatLocation(parking)}`)) return;
   
@@ -333,14 +344,26 @@ async function deleteParking(parking) {
   }
 }
 
+// Logout functie
+function logout() {
+  if (confirm('Weet je zeker dat je wilt uitloggen?')) {
+    authService.logout();
+    window.location.href = '/login';
+  }
+}
+
 // Initial load
 onMounted(() => {
   loadParkings();
 });
 </script>
 
-<style>
+<style scoped>
 .ion-margin-top {
   margin-top: 16px;
+}
+
+.logout-text {
+  margin-right: 8px;
 }
 </style>

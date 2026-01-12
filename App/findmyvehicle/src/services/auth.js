@@ -68,7 +68,7 @@ export const authService = {
         return !!localStorage.getItem("currentUser");
     },
 
-    // Logout Function (NOG NIET GEBRUIKT)
+    // Logout Function
     logout() {
         localStorage.removeItem("currentUser");
     },
