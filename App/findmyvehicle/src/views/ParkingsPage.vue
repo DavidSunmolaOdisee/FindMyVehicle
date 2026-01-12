@@ -52,7 +52,7 @@
             <ion-item-option color="primary" @click="editParking(parking)">
               <ion-icon slot="icon-only" :icon="pencil"></ion-icon>
             </ion-item-option>
-            <ion-item-option color="danger" @click="deleteParking(parking)">
+            <ion-item-option color="danger" @click="closeParking(parking)">
               <ion-icon slot="icon-only" :icon="trash"></ion-icon>
             </ion-item-option>
           </ion-item-options>
@@ -319,9 +319,9 @@ async function saveParking() {
       response = await apiPost('parkings.php', parkingData);
       alert('Parking gestart!');
     }
-    
-    closeParkingModal();
     await loadParkings();
+
+    closeParkingModal();
   } catch (error) {
     console.log('Error saving:', error);
     alert('Fout: ' + error.message);
@@ -331,18 +331,30 @@ async function saveParking() {
 }
 
 // ==================== DELETE OPERATION ====================
-async function deleteParking(parking) {
-  if (!confirm(`Weet je zeker dat je deze parking wilt verwijderen?\n${getVehicleName(parking.vehicle_id)} - ${formatLocation(parking)}`)) return;
-  
+async function closeParking(parking) {
+  if (
+    !confirm(
+      `Weet je zeker dat je deze parking wilt afsluiten?\n` +
+      `${getVehicleName(parking.vehicle_id)} - ${formatLocation(parking)}`
+    )
+  ) return;
+
   try {
-    await apiDelete(`parkings.php?id=${parking.id}`);
+    await apiPost(
+      `parkings/close?id=${parking.id}`,
+      {} 
+    );
+
+    // parking uit actieve lijst halen (niet deleten in DB!)
     parkings.value = parkings.value.filter(p => p.id !== parking.id);
-    alert('Parking verwijderd!');
+
+    alert('Parking afgesloten');
   } catch (error) {
-    console.log('Delete error:', error);
-    alert('Fout bij verwijderen');
+    console.error('Close parking error:', error);
+    alert('Fout bij afsluiten van parking');
   }
 }
+
 
 // Logout functie
 function logout() {
