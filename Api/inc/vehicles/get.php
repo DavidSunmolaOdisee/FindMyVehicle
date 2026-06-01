@@ -1,23 +1,26 @@
 <?php
-// query: ?user_id=... [&id=...]
 $user_id = $_GET["user_id"] ?? null;
 $id      = $_GET["id"]      ?? null;
 
-if (!$user_id) {
-  deliver_response(400, ["error" => "user_id is required"]);
-}
+if (!$user_id) deliver_response(400, ["error" => "user_id is required"]);
 
 if ($id) {
-  $sql = "SELECT * FROM vehicles WHERE id = ? AND user_id = ?";
+  $sql = "SELECT id, user_id, type, brand, model, notes, photo, photo_mime, created_at FROM vehicles WHERE id = ? AND user_id = ?";
   $stmt = $conn->prepare($sql);
   $stmt->bind_param("ii", $id, $user_id);
 } else {
-  $sql = "SELECT * FROM vehicles WHERE user_id = ? ORDER BY created_at DESC";
+  $sql = "SELECT id, user_id, type, brand, model, notes, photo, photo_mime, created_at FROM vehicles WHERE user_id = ? ORDER BY created_at DESC";
   $stmt = $conn->prepare($sql);
   $stmt->bind_param("i", $user_id);
 }
 
 $stmt->execute();
 $result = $stmt->get_result();
-$data = getJsonObjFromResult($result);
-deliver_response(200, $data);
+$rows = [];
+while ($row = $result->fetch_assoc()) {
+  if ($row["photo"] !== null) {
+    $row["photo"] = base64_encode($row["photo"]);
+  }
+  $rows[] = $row;
+}
+deliver_response(200, $rows);

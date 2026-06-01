@@ -2,7 +2,7 @@
   <ion-page>
     <ion-header>
       <ion-toolbar>
-        <ion-title>Dashboard</ion-title>
+        <ion-title>Parkings</ion-title>
         <ion-buttons slot="end">
           <p class="logout-text">Logout</p>
           <ion-button @click="logout" fill="outline" color="danger">
@@ -134,7 +134,7 @@ import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonButton, IonLis
 import { ref, onMounted } from 'vue';
 import { add, pencil, trash, logOut } from 'ionicons/icons';
 import { authService } from '@/services/auth.js';
-import { apiGet, apiPost, apiPut, apiDelete } from '@/services/api.js';
+import { apiGet, apiPost, apiPut } from '@/services/api.js';
 import { Geolocation } from '@capacitor/geolocation';
 
 // State

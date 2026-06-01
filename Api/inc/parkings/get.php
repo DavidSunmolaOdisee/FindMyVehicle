@@ -1,12 +1,9 @@
 <?php
-// Query: ?user_id=... [&active=1] [&id=... (optioneel)]
 $user_id = $_GET["user_id"] ?? null;
 $active  = $_GET["active"]  ?? null;
 $id      = $_GET["id"]      ?? null;
 
-if (!$user_id) {
-  deliver_response(400, ["error" => "user_id is required"]);
-}
+if (!$user_id) deliver_response(400, ["error" => "user_id is required"]);
 
 if ($id) {
   $sql = "SELECT * FROM parkings WHERE id = ? AND user_id = ?";
@@ -24,5 +21,11 @@ if ($id) {
 
 $stmt->execute();
 $result = $stmt->get_result();
-$data = getJsonObjFromResult($result);
-deliver_response(200, $data);
+$rows = [];
+while ($row = $result->fetch_assoc()) {
+  if ($row["photo"] !== null) {
+    $row["photo"] = base64_encode($row["photo"]);
+  }
+  $rows[] = $row;
+}
+deliver_response(200, $rows);
