@@ -1,21 +1,23 @@
-const baseApiAddress = "https://qureshiarham.be/WM/fmv/Api/";
+const configuredApiAddress = import.meta.env.VITE_API_BASE_URL?.trim();
+const baseApiAddress = (configuredApiAddress || "https://qureshiarham.be/WM/fmv/Api/")
+    .replace(/\/?$/, "/");
 
 let defaultOptions = {
     method: "POST",
-    mode: "cors", 
+    mode: "cors",
     cache: "no-cache",
     credentials: "omit"
 };
 
 async function apiCall(endpoint, options = {}) {
     try {
-        let url = baseApiAddress + endpoint;
+        const url = baseApiAddress + endpoint;
         const config = {
             ...defaultOptions,
             ...options
         };
 
-        if (config.body && typeof config.body === 'object') {
+        if (config.body && typeof config.body === "object") {
             config.body = JSON.stringify(config.body);
             config.headers = {
                 "Content-Type": "application/json",
@@ -23,18 +25,16 @@ async function apiCall(endpoint, options = {}) {
             };
         }
 
-        console.log("API Call:", url, config);
-
         const response = await fetch(url, config);
         const responseData = await response.json();
-        
+
         if (!response.ok) {
-            throw new Error(responseData.message || `HTTP error! status: ${response.status}`);
+            throw new Error(responseData.message || responseData.error || `HTTP error! status: ${response.status}`);
         }
-        
+
         return responseData;
     } catch (error) {
-        console.log("Fout bij API call: ", error);
+        console.error("API call failed:", error);
         throw error;
     }
 }
@@ -66,10 +66,10 @@ async function apiDelete(endpoint) {
     });
 }
 
-export { 
-    apiPost, 
-    apiGet, 
-    apiPut, 
-    apiDelete, 
+export {
+    apiPost,
+    apiGet,
+    apiPut,
+    apiDelete,
     baseApiAddress
 };
