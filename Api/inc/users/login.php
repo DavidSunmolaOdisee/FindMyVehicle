@@ -13,11 +13,31 @@ $res = $stmt->get_result();
 $user = $res->fetch_assoc();
 
 if (!$user) {
-  deliver_response(401, ["error" => "User not found"]);
+  deliver_response(401, ["error" => "Invalid username or password"]);
 }
 
-if ($password !== $user["password"]) {
-  deliver_response(401, ["error" => "Invalid password"]);
+$storedPassword = $user["password"];
+$info = password_get_info($storedPassword);
+$isHashed = ($info["algo"] ?? 0) !== 0;
+
+if ($isHashed) {
+  $validPassword = password_verify($password, $storedPassword);
+} else {
+  // Backwards compatibility for accounts created before password hashing was added.
+  $validPassword = hash_equals((string)$storedPassword, (string)$password);
+
+  // Transparently upgrade a legacy plaintext password after a successful login.
+  if ($validPassword) {
+    $upgradedHash = password_hash($password, PASSWORD_DEFAULT);
+    $upgrade = $conn->prepare("UPDATE app_users SET password=? WHERE id=?");
+    $upgrade->bind_param("si", $upgradedHash, $user["id"]);
+    $upgrade->execute();
+    $upgrade->close();
+  }
+}
+
+if (!$validPassword) {
+  deliver_response(401, ["error" => "Invalid username or password"]);
 }
 
 deliver_response(200, [
